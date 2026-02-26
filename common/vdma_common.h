@@ -312,6 +312,21 @@ void hailo_vdma_stop_channel(u8 __iomem *regs);
 
 bool hailo_check_channel_index(u8 channel_index, u32 src_channels_bitmask, bool is_input_channel);
 
+/**
+ * @brief Pauses all enabled VDMA channels in the engine.
+ *
+ * @param engine The VDMA engine structure.
+ */
+void hailo_vdma_engine_pause_channels(struct hailo_vdma_engine *engine);
+
+/**
+ * @brief Resumes all enabled VDMA channels in the engine.
+ *
+ * @param engine The VDMA engine structure.
+ */
+void hailo_vdma_engine_resume_channels(struct hailo_vdma_engine *engine);
+
+
 #ifdef __cplusplus
 }
 #endif

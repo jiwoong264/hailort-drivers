@@ -69,6 +69,13 @@
     for_each_sg((sgt)->sgl, sg, (sgt)->nents, i)
 #endif /* for_each_sgtable_dma_sg */
 
+atomic64_t g_total_transfer_count = ATOMIC64_INIT(0);
+EXPORT_SYMBOL(g_total_transfer_count);
+
+static void start_vdma_control_register(u8 __iomem *host_regs);
+static void hailo_vdma_channel_pause(u8 __iomem *host_regs);
+static void hailo_vdma_channel_abort(u8 __iomem *host_regs);
+
 static int ongoing_transfer_push(struct hailo_vdma_channel *channel,
     struct hailo_ongoing_transfer *ongoing_transfer)
 {
@@ -454,7 +461,14 @@ int hailo_vdma_launch_transfer(
     u16 new_num_avail = 0;
     struct hailo_ongoing_transfer ongoing_transfer = {0};
     u8 i = 0;
+    s64 current_transfer_size = 0;
 
+    if (atomic_read(&_g_pause_flag)) {
+        hailo_vdma_channel_pause(channel->host_regs);
+        while (atomic_read(&_g_pause_flag)) {}
+    }
+    start_vdma_control_register(channel->host_regs);
+    
     channel->state.desc_count_mask = (desc_list->desc_count - 1);
 
     if (NULL == channel->last_desc_list) {
@@ -499,6 +513,8 @@ int hailo_vdma_launch_transfer(
 
         ongoing_transfer.dirty_descs[i+1] = (u16)last_desc;
         ongoing_transfer.buffers[i] = buffers[i];
+
+        current_transfer_size += buffers[i].size;
     }
     ongoing_transfer.buffers_count = buffers_count;
 
@@ -515,7 +531,9 @@ int hailo_vdma_launch_transfer(
 
     new_num_avail = (u16)((last_desc + 1) % desc_list->desc_count);
     channel->state.num_avail = new_num_avail;
-    hailo_vdma_set_num_avail(channel->host_regs, new_num_avail);
+    
+    atomic64_add(current_transfer_size, &g_total_transfer_count); // update memory access amount
+    hailo_vdma_set_num_avail(channel->host_regs, new_num_avail); // start DMA
 
     return (int)total_descs;
 }
@@ -849,7 +867,7 @@ static void hailo_vdma_channel_pause(u8 __iomem *host_regs)
 }
 
 // This function reads and writes the register - should try to make more optimized in future
-static void hailo_vdma_channel_abort(u8 __iomem *host_regs)
+void hailo_vdma_channel_abort(u8 __iomem *host_regs)
 {
     u32 host_regs_value = ioread32(host_regs);
     iowrite32(WRITE_BITS_AT_OFFSET(BYTE_SIZE * BITS_IN_BYTE, CHANNEL_CONTROL_OFFSET * BITS_IN_BYTE, host_regs_value,
@@ -959,4 +977,30 @@ bool hailo_check_channel_index(u8 channel_index, u32 src_channels_bitmask, bool 
 {
     return is_input_channel ? hailo_test_bit(channel_index, &src_channels_bitmask) :
         (!hailo_test_bit(channel_index, &src_channels_bitmask));
+}
+
+void hailo_vdma_engine_pause_channels(struct hailo_vdma_engine *engine)
+{
+    struct hailo_vdma_channel *channel = NULL;
+    u8 channel_index = 0;
+
+    for_each_vdma_channel(engine, channel, channel_index) {
+        if (hailo_test_bit(channel_index, &engine->enabled_channels)) {
+            hailo_vdma_channel_pause(channel->host_regs);
+            pr_info("Paused VDMA Channel %u\n", channel_index);
+        }
+    }
+}
+
+void hailo_vdma_engine_resume_channels(struct hailo_vdma_engine *engine)
+{
+    struct hailo_vdma_channel *channel = NULL;
+    u8 channel_index = 0;
+
+    for_each_vdma_channel(engine, channel, channel_index) {
+        if (hailo_test_bit(channel_index, &engine->enabled_channels)) {
+            start_vdma_control_register(channel->host_regs);
+            pr_info("Resumed VDMA Channel %u\n", channel_index);
+        }
+    }
 }

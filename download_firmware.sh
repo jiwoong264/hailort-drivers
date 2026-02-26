@@ -6,12 +6,12 @@ readonly HRT_VERSION=4.22.0
 readonly FW_AWS_DIR="Hailo8/${HRT_VERSION}/FW"
 readonly FW="hailo8_fw.${HRT_VERSION}.bin"
 
-function download_fw(){
+# function download_fw(){
     wget -N ${BASE_URI}/${FW_AWS_DIR}/${FW}
-}
+# }
 
-function main(){
-    download_fw
-}
+# function main(){
+#     download_fw
+# }
 
-main
+# main

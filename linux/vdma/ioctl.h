@@ -33,5 +33,9 @@ long hailo_vdma_interrupts_read_timestamps_ioctl(struct hailo_vdma_controller *c
 
 long hailo_vdma_launch_transfer_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma_controller *controller,
     unsigned long arg);
+long hailo_vdma_pause_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma_controller *controller,
+    unsigned long arg);
 
+long hailo_vdma_resume_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma_controller *controller,
+    unsigned long arg);
 #endif /* _HAILO_VDMA_IOCTL_H_ */

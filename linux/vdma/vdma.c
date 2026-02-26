@@ -168,6 +168,7 @@ void hailo_vdma_irq_handler(struct hailo_vdma_controller *controller,
     size_t engine_index, u32 channels_bitmap)
 {
     struct hailo_vdma_engine *engine = NULL;
+    // printk(KERN_INFO "HAILO-DMA-irq | hailo_vdma_irq_handler()");
 
     BUG_ON(engine_index >= controller->vdma_engines_count);
     engine = &controller->vdma_engines[engine_index];
@@ -213,6 +214,10 @@ long hailo_vdma_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma
         return hailo_vdma_continuous_buffer_free_ioctl(context, controller, arg);
     case HAILO_VDMA_LAUNCH_TRANSFER:
         return hailo_vdma_launch_transfer_ioctl(context, controller, arg);
+    case HAILO_VDMA_PAUSE:
+        return hailo_vdma_pause_ioctl(context, controller, arg);
+    case HAILO_VDMA_RESUME:
+        return hailo_vdma_resume_ioctl(context, controller, arg);
     default:
         hailo_dev_err(controller->dev, "Invalid vDMA ioctl code 0x%x (nr: %d)\n", cmd, _IOC_NR(cmd));
         return -ENOTTY;

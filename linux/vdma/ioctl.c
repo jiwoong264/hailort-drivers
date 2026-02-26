@@ -717,3 +717,53 @@ long hailo_vdma_launch_transfer_ioctl(struct hailo_vdma_file_context *context, s
         params.is_debug
     );
 }
+
+long hailo_vdma_pause_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma_controller *controller,
+    unsigned long arg)
+{
+    // copy_from_user는 구조체 크기만큼 호출하되, 내부 필드는 무시합니다.
+    struct hailo_vdma_pause_params params;
+    struct hailo_vdma_engine *engine = NULL;
+    size_t engine_index = 0; // 루프 변수
+
+    // User-space에서 파라미터가 전달된다면 복사. 비어있는 구조체라도 호출합니다.
+    if (copy_from_user(&params, (void *)arg, sizeof(params))) {
+        hailo_dev_err(controller->dev, "copy_from_user fail for HAILO_VDMA_PAUSE\n");
+        return -EFAULT;
+    }
+
+    // 모든 VDMA Engine을 순회하며 Pause 호출
+    for_each_vdma_engine(controller, engine, engine_index) {
+        // hailo_vdma_engine_pause_channels 함수는 vdma_common.c에 구현되어야 합니다.
+        hailo_vdma_engine_pause_channels(engine);
+        // pr_info는 hailo_vdma_engine_pause_channels 내부에서 출력되므로 여기서는 생략 가능합니다.
+    }
+    
+    hailo_dev_info(controller->dev, "All VDMA Engines paused by IOCTL\n");
+    return 0;
+}
+
+
+long hailo_vdma_resume_ioctl(struct hailo_vdma_file_context *context, struct hailo_vdma_controller *controller,
+    unsigned long arg)
+{
+    // copy_from_user는 구조체 크기만큼 호출하되, 내부 필드는 무시합니다.
+    struct hailo_vdma_resume_params params;
+    struct hailo_vdma_engine *engine = NULL;
+    size_t engine_index = 0; // 루프 변수
+
+    if (copy_from_user(&params, (void *)arg, sizeof(params))) {
+        hailo_dev_err(controller->dev, "copy_from_user fail for HAILO_VDMA_RESUME\n");
+        return -EFAULT;
+    }
+
+    // 모든 VDMA Engine을 순회하며 Resume 호출
+    for_each_vdma_engine(controller, engine, engine_index) {
+        // hailo_vdma_engine_resume_channels 함수는 vdma_common.c에 구현되어야 합니다.
+        hailo_vdma_engine_resume_channels(engine);
+        // pr_info는 hailo_vdma_engine_resume_channels 내부에서 출력되므로 여기서는 생략 가능합니다.
+    }
+    
+    hailo_dev_info(controller->dev, "All VDMA Engines resumed by IOCTL\n");
+    return 0;
+}

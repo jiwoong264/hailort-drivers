@@ -540,6 +540,14 @@ struct hailo_vdma_launch_transfer_params {
                                                                         // more info (e.g desc complete status)
 };
 
+// VDMA Pause Params
+struct hailo_vdma_pause_params {
+};
+
+// VDMA Resume Params
+struct hailo_vdma_resume_params {
+};
+
 /* structure used in ioctl HAILO_SOC_CONNECT */
 struct hailo_soc_connect_params {
     uint16_t port_number;           // in
@@ -635,6 +643,8 @@ enum hailo_vdma_ioctl_code {
     HAILO_VDMA_CONTINUOUS_BUFFER_ALLOC_CODE,
     HAILO_VDMA_CONTINUOUS_BUFFER_FREE_CODE,
     HAILO_VDMA_LAUNCH_TRANSFER_CODE,
+    HAILO_VDMA_PAUSE_CODE,
+    HAILO_VDMA_RESUME_CODE,
 
     // Must be last
     HAILO_VDMA_IOCTL_MAX_NR,
@@ -662,6 +672,9 @@ enum hailo_vdma_ioctl_code {
 #define HAILO_VDMA_CONTINUOUS_BUFFER_FREE     _IOR_(HAILO_VDMA_IOCTL_MAGIC,  HAILO_VDMA_CONTINUOUS_BUFFER_FREE_CODE,       struct hailo_free_continuous_buffer_params)
 
 #define HAILO_VDMA_LAUNCH_TRANSFER            _IOR_(HAILO_VDMA_IOCTL_MAGIC,  HAILO_VDMA_LAUNCH_TRANSFER_CODE,              struct hailo_vdma_launch_transfer_params)
+
+#define HAILO_VDMA_PAUSE            _IOR_(HAILO_VDMA_IOCTL_MAGIC,  HAILO_VDMA_PAUSE_CODE,              struct hailo_vdma_pause_params)
+#define HAILO_VDMA_RESUME            _IOR_(HAILO_VDMA_IOCTL_MAGIC,  HAILO_VDMA_RESUME_CODE,              struct hailo_vdma_resume_params)
 
 enum hailo_nnc_ioctl_code {
     HAILO_FW_CONTROL_CODE,
